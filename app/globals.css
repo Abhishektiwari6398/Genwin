@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  @media (max-width: 320px) {
+    .small-mobile\:w-full {
+      width: 100%;
+    }
+    .small-mobile\:text-xs {
+      font-size: 0.75rem; /* 12px */
+    }
+    .small-mobile\:p-2 {
+      padding: 0.5rem; /* 8px */
+    }
+    .small-mobile\:mt-2 {
+      margin-top: 0.5rem; /* 8px */
+    }
+  }
+}
+
+
