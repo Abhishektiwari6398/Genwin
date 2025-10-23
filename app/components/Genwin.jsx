@@ -2,10 +2,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Youtube, Instagram } from "lucide-react";
-// import handleDownloadPDF from "@/app/components/pdf";
 import jsPDF from "jspdf";
 
-// Dynamically import HTMLFlipBook with no SSR
 const HTMLFlipBook = dynamic(() => import("react-pageflip"), {
   ssr: false,
 });
@@ -25,16 +23,14 @@ export default function Genwin() {
     isMobile: false
   });
 
-  // Check if component is mounted (client-side only)
   useEffect(() => {
     setIsMounted(true);
     
-    // Set initial dimensions
     const updateDimensions = () => {
       const isMobile = window.innerWidth < 640;
       setDimensions({
         width: isMobile ? window.innerWidth : 900,
-        height: isMobile ? window.innerHeight * 0.85 : 650,
+        height: isMobile ? 600 : 650, // Fixed height instead of dynamic
         isMobile
       });
     };
@@ -47,37 +43,20 @@ export default function Genwin() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!isMounted) return;
-
-    const setVh = () => {
-      document.documentElement.style.setProperty("--vh", `${window.innerHeight}px`);
-    };
-    setVh();
-    window.addEventListener("resize", setVh);
-    window.addEventListener("orientationchange", setVh);
-    return () => {
-      window.removeEventListener("resize", setVh);
-      window.removeEventListener("orientationchange", setVh);
-    };
-  }, [isMounted]);
-
-  // Disables all scrolling and zooming globally
-  useEffect(() => {
-    if (!isMounted) return;
-
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
-    document.documentElement.style.touchAction = "none";
-
-    return () => {
-      document.body.style.overflow = "auto";
-      document.documentElement.style.overflow = "auto";
-      document.body.style.touchAction = "auto";
-      document.documentElement.style.touchAction = "auto";
-    };
-  }, [isMounted]);
+  // ❌ REMOVE THIS - Ye scroll block kar raha tha
+  // useEffect(() => {
+  //   if (!isMounted) return;
+  //   document.body.style.overflow = "hidden";
+  //   document.documentElement.style.overflow = "hidden";
+  //   document.body.style.touchAction = "none";
+  //   document.documentElement.style.touchAction = "none";
+  //   return () => {
+  //     document.body.style.overflow = "auto";
+  //     document.documentElement.style.overflow = "auto";
+  //     document.body.style.touchAction = "auto";
+  //     document.documentElement.style.touchAction = "auto";
+  //   };
+  // }, [isMounted]);
 
   useEffect(() => {
     if (!isMounted) return;
@@ -104,16 +83,9 @@ export default function Genwin() {
       } catch (error) {
         console.log('Flipbook not yet ready:', error);
       }
-
-      if (dimensions.isMobile) {
-        document.body.style.overflow = "hidden";
-      }
     }, 100);
 
-    return () => {
-      clearTimeout(timer);
-      document.body.style.overflow = "auto";
-    };
+    return () => clearTimeout(timer);
   }, [isMounted, dimensions]);
 
   const onFlip = (e) => setCurrent(e.data);
@@ -183,7 +155,6 @@ export default function Genwin() {
 
       let y = margin;
 
-      // Logo
       const logoWidth = 25;
       const logoHeight = 25;
       const logoPath = "logo.png";
@@ -193,7 +164,6 @@ export default function Genwin() {
         console.warn("Logo not found:", err);
       }
 
-      // Brand Name
       pdf.setFontSize(20);
       pdf.setTextColor(220, 0, 0);
       pdf.setFont("helvetica", "bold");
@@ -201,7 +171,6 @@ export default function Genwin() {
 
       y += logoHeight + 5;
 
-      // Product Details
       const productText = `
   Page No : ${index + 1}. 
 
@@ -220,7 +189,6 @@ export default function Genwin() {
       pdf.text(productLines, margin, y);
       y += productLines.length * 7 + 5;
 
-      // Page Number
       pdf.setTextColor(100);
       pdf.setFontSize(9);
       pdf.text(`Page ${index + 1} of ${pages.length}`, pdf.internal.pageSize.getWidth() - margin - 20, pdf.internal.pageSize.getHeight() - 10);
@@ -247,12 +215,11 @@ export default function Genwin() {
   ];
 
   return (
-    <div
-      className="h-screen overflow-hidden bg-white flex flex-col items-center justify-center"
-      style={{ touchAction: "none", height: "calc(var(--vh, 1vh) * 100)" }}
-    >
-      {/* NAVBAR */}
-      <header className="sticky top-0 z-40 bg-red-600 shadow w-full">
+    // ✅ CHANGED: Removed h-screen and overflow-hidden
+    // Now it's a normal scrollable section
+    <div className="min-h-screen bg-white py-8">
+      {/* NAVBAR - Made it non-sticky */}
+      <header className="bg-red-600 shadow w-full mb-6">
         <div className="flex justify-between items-center px-4 h-16">
           <div onClick={() => goToPage(0)} className="flex items-center gap-2 cursor-pointer">
             <img src="/assets/images/logo.png" alt="logo" className="w-10 h-10 bg-white p-1 rounded" />
@@ -276,14 +243,14 @@ export default function Genwin() {
       </header>
 
       {/* MAIN SECTION */}
-      <div ref={stageRef} className="flex flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 pt-4 gap-6 overflow-hidden">
+      <div ref={stageRef} className="flex w-full max-w-7xl mx-auto px-2 sm:px-6 gap-6">
         {/* Desktop TOC */}
-        <aside className="hidden lg:block w-80 bg-white border rounded-md p-4 shadow-sm overflow-y-auto max-h-[85vh]">
+        <aside className="hidden lg:block w-80 bg-white border rounded-md p-4 shadow-sm overflow-y-auto max-h-[800px] sticky top-4">
           <h3 className="text-lg font-semibold mb-3 text-gray-800">Table of Contents</h3>
           {pages.map((p, i) => (
             <button
               key={p.id}
-              className={`w-full text-left p-3 rounded-md ${i === current ? "bg-red-50 border border-red-100" : "hover:bg-gray-50"}`}
+              className={`w-full text-left p-3 rounded-md mb-2 ${i === current ? "bg-red-50 border border-red-100" : "hover:bg-gray-50"}`}
               onClick={() => goToPage(i)}
             >
               <div className="text-sm font-medium text-gray-800">{p.name}</div>
@@ -305,7 +272,7 @@ export default function Genwin() {
                     goToPage(i);
                     setTocOpen(false);
                   }}
-                  className={`w-full text-left p-3 rounded-md ${i === current ? "bg-red-50 border border-red-100" : "hover:bg-gray-50"}`}
+                  className={`w-full text-left p-3 rounded-md mb-2 ${i === current ? "bg-red-50 border border-red-100" : "hover:bg-gray-50"}`}
                 >
                   <div className="text-sm font-medium text-gray-800">{p.name}</div>
                   <div className="text-xs text-gray-500">{p.size}</div>
@@ -316,9 +283,9 @@ export default function Genwin() {
         )}
 
         {/* FLIPBOOK */}
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1">
           {!isMounted ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-96">
               <div className="text-gray-600">Loading...</div>
             </div>
           ) : (
@@ -424,7 +391,6 @@ export default function Genwin() {
                   <p className="text-sm text-gray-600 mb-3">Packing: {p.packing}</p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch h-full">
-                    {/* IMAGE CARD */}
                     <div className="rounded-md border border-gray-100 p-4 flex flex-col items-center justify-center">
                       {p.images?.[0] ? (
                         <>
@@ -451,7 +417,6 @@ export default function Genwin() {
                       )}
                     </div>
 
-                    {/* VIDEO CARD */}
                     <div className="rounded-md border border-gray-100 p-4 flex flex-col items-center justify-center">
                       {p.videos?.[0] ? (
                         <>

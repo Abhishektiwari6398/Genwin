@@ -4,6 +4,7 @@ import '../styles/globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import WhatsAppLink from '@/components/WhatsApp';
+// import Genwin from './components/Genwin';
 
 // Configure Google Fonts
 const montserrat = Montserrat({
@@ -45,6 +46,7 @@ export default function RootLayout({ children }) {
         >
           <WhatsAppIcon />
         </WhatsAppLink>
+        {/* <Genwin/> */}
         
         <Footer />
       </body>
