@@ -214,6 +214,185 @@ export default function Genwin() {
     { id: 14, images: ["/assets/images/img14.JPG"], videos: ["https://drive.google.com/file/d/1DsP59PWd8KxEgyRryu4lrFIQtgZKY264/preview"], name: "GENWIN ACRYLIC FOAM TAPE", size: "8MM x 0.8MM x 33MTR", code: "GW*GREY*8*0.8*33", youtube: "https://www.youtube.com/@genwinauto/", instagram: "https://www.instagram.com/genwin.official?igsh=MThjZnZxNzQwMTdtbw==", website: "https://www.genwinauto.com", price: 190, packing: 50 },
   ];
 
+  /**
+   * Magnifier component with controls (magnifier icon + +/-)
+   * Replaces the previous simple zoom modal.
+   */
+  const Magnifier = ({ src, initialZoom = 2, lensSize = 180, onClose }) => {
+    const imgRef = useRef(null);
+    const wrapperRef = useRef(null);
+    const [showLens, setShowLens] = useState(true);
+    const [lensPos, setLensPos] = useState({ x: 0, y: 0 });
+    const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
+    const [isTouch, setIsTouch] = useState(false);
+
+    // zoom level controlled by buttons
+    const [zoomLevel, setZoomLevel] = useState(initialZoom);
+    const ZOOM_STEP = 0.2;
+    const ZOOM_MIN = 1;
+    const ZOOM_MAX = 4;
+
+    useEffect(() => {
+      setIsTouch(('ontouchstart' in window) || navigator.maxTouchPoints > 0);
+    }, []);
+
+    useEffect(() => {
+      const imgEl = imgRef.current;
+      if (!imgEl) return;
+      const update = () => {
+        setImgSize({ w: imgEl.clientWidth, h: imgEl.clientHeight });
+      };
+      update();
+      window.addEventListener("resize", update);
+      return () => window.removeEventListener("resize", update);
+    }, [src]);
+
+    const moveLens = (pageX, pageY) => {
+      const rect = imgRef.current.getBoundingClientRect();
+      const x = pageX - rect.left;
+      const y = pageY - rect.top;
+
+      // clamp so lens stays within image
+      const cx = Math.max(0, Math.min(x, rect.width));
+      const cy = Math.max(0, Math.min(y, rect.height));
+      setLensPos({ x: cx, y: cy });
+    };
+
+    const handleMouseMove = (e) => {
+      if (!imgRef.current) return;
+      moveLens(e.pageX, e.pageY);
+    };
+
+    const handleTouch = (e) => {
+      if (!imgRef.current) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      moveLens(touch.pageX, touch.pageY);
+    };
+
+    const toggleLens = (e) => {
+      // on mobile tap we toggle lens visibility (and move it)
+      if (isTouch) {
+        const touch = e.touches ? e.touches[0] : null;
+        if (touch) moveLens(touch.pageX, touch.pageY);
+        setShowLens(s => !s);
+      }
+    };
+
+    // background position calculation in percent
+    const bgPos = () => {
+      if (!imgSize.w || !imgSize.h) return "50% 50%";
+      const xPercent = (lensPos.x / imgSize.w) * 100;
+      const yPercent = (lensPos.y / imgSize.h) * 100;
+      return `${xPercent}% ${yPercent}%`;
+    };
+
+    const zoomIn = () => setZoomLevel(z => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)));
+    const zoomOut = () => setZoomLevel(z => Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2)));
+
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => onClose?.()}
+      >
+        <div
+          className="bg-white rounded-lg shadow-lg max-w-4xl w-full p-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-700">Preview</div>
+
+            {/* Controls group (magnifier icon + +/- + zoom value) */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-gray-50 rounded-md p-1 border">
+                {/* Magnifier icon */}
+                <div title="Magnifier" className="w-8 h-8 flex items-center justify-center">
+                  {/* simple SVG magnifier */}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d="M21 21l-4.35-4.35" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="11" cy="11" r="6" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+
+                {/* Zoom out */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); zoomOut(); }}
+                  className="px-2 py-1 text-sm rounded-md"
+                  aria-label="Zoom out"
+                  title="Zoom out"
+                >
+                  −
+                </button>
+
+                {/* Zoom level display */}
+                <div className="text-xs px-2">{zoomLevel}×</div>
+
+                {/* Zoom in */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); zoomIn(); }}
+                  className="px-2 py-1 text-sm rounded-md"
+                  aria-label="Zoom in"
+                  title="Zoom in"
+                >
+                  +
+                </button>
+              </div>
+
+              <button
+                className="px-3 py-1 rounded-md bg-red-600 text-white"
+                onClick={() => onClose?.()}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={wrapperRef}
+            className="w-full flex justify-center overflow-auto"
+            onMouseMove={handleMouseMove}
+            onMouseEnter={() => setShowLens(true)}
+            onMouseLeave={() => setShowLens(false)}
+            onTouchStart={(e) => { toggleLens(e); handleTouch(e); }}
+            onTouchMove={handleTouch}
+            style={{ position: "relative" }}
+          >
+            <img
+              ref={imgRef}
+              src={src}
+              alt="zoom"
+              className="max-h-[70vh] object-contain"
+              style={{ display: "block", maxWidth: "100%", height: "auto" }}
+              draggable={false}
+            />
+
+            {/* Lens */}
+            {showLens && (
+              <div
+                style={{
+                  position: "absolute",
+                  pointerEvents: "none", // allow events to pass to image
+                  width: lensSize,
+                  height: lensSize,
+                  borderRadius: "50%",
+                  border: "2px solid rgba(255,255,255,0.9)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                  transform: `translate(-50%, -50%)`,
+                  left: `${lensPos.x}px`,
+                  top: `${lensPos.y}px`,
+                  backgroundImage: `url(${src})`,
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: `${zoomLevel * 100}%`,
+                  backgroundPosition: bgPos(),
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     // ✅ CHANGED: Removed h-screen and overflow-hidden
     // Now it's a normal scrollable section
@@ -455,52 +634,12 @@ export default function Genwin() {
           )}
 
           {zoomImg && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-              onClick={() => {
-                setZoomImg(null);
-                setZoomScale(1);
-              }}
-            >
-              <div
-                className="bg-white rounded-lg shadow-lg max-w-3xl w-[92%] p-4"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex gap-2">
-                    <button
-                      className="px-3 py-1 rounded-md bg-red-50 text-red-600"
-                      onClick={() => setZoomScale((s) => s + 0.2)}
-                    >
-                      +
-                    </button>
-                    <button
-                      className="px-3 py-1 rounded-md bg-red-50 text-red-600"
-                      onClick={() => setZoomScale((s) => Math.max(0.5, s - 0.2))}
-                    >
-                      -
-                    </button>
-                  </div>
-                  <button
-                    className="px-3 py-1 rounded-md bg-red-600 text-white"
-                    onClick={() => {
-                      setZoomImg(null);
-                      setZoomScale(1);
-                    }}
-                  >
-                    Close
-                  </button>
-                </div>
-                <div className="flex justify-center overflow-auto">
-                  <img
-                    src={zoomImg}
-                    alt="zoom"
-                    style={{ transform: `scale(${zoomScale})` }}
-                    className="max-h-[70vh] object-contain"
-                  />
-                </div>
-              </div>
-            </div>
+            <Magnifier
+              src={zoomImg}
+              initialZoom={2}   // starting zoom (you can change)
+              lensSize={180}
+              onClose={() => setZoomImg(null)}
+            />
           )}
         </main>
       </div>
