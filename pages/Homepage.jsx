@@ -24,7 +24,7 @@ import ClockComponentBlack from "@/components/ClockComponentBlack";
 import Newsletter from "@/components/Newsletter";
 import { Platypi } from "next/font/google";
 import AbuSecond from "@/components/AbuSecond";
-import Genwin from "@/app/components/Genwin";
+
 
 export const metadata = {
   title:
@@ -366,15 +366,7 @@ export default function HomePage() {
       >
         <Testimonials />
       </section>
-      <section
-        className="py-8"
-        style={{
-          backgroundImage: `linear-gradient(90deg, rgba(36,24,0,1) 0%, rgba(255,234,232,1) 0%, rgba(255,255,255,1) 100%)`,
-        }}
-      >
-       
-        <Genwin />
-      </section>
+    
       <section
         style={{
           backgroundImage: `radial-gradient(circle, rgba(255,255,255,1) 20%, rgba(249,232,232,1) 100%)`,

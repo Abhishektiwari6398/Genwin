@@ -1,6 +1,7 @@
 
 import HomePage from '@/pages/Homepage'
 import React from 'react'
+import Genwin from './components/Genwin'
 
 export const metadata = {
   title: 'Genwin | Best Double Sided Tape',
@@ -11,6 +12,7 @@ const page = () => {
 
   return (
     <div>
+      <Genwin/>
       <HomePage/>
      
       </div>
